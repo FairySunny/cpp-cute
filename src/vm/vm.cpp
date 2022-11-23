@@ -1,25 +1,9 @@
-#include <vector>
-#include <string>
-#include <unordered_map>
 #include <unordered_set>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
 #include "vm.h"
-
-struct gc_base_obj
-{
-    char gc_status;
-    virtual ~gc_base_obj() {}
-};
-
-template<typename T>
-struct gc_obj : gc_base_obj
-{
-    T value;
-    template<typename ... Args>
-    gc_obj(Args ... args): value(args ...) {}
-};
+#include "misc.h"
 
 static char gc_current_status;
 static std::unordered_set<gc_base_obj *> gc_obj_list;
@@ -38,49 +22,6 @@ static void delete_obj(gc_base_obj * obj)
     if (gc_obj_list.erase(obj))
         delete obj;
 }
-
-struct type_and_value;
-
-typedef const std::string str_def;
-typedef gc_obj<str_def> str;
-typedef std::unordered_map<std::string, type_and_value> obj_def;
-typedef gc_obj<obj_def> obj;
-typedef std::vector<type_and_value> arr_def;
-typedef gc_obj<arr_def> arr;
-struct closure_def;
-typedef gc_obj<closure_def> closure;
-struct closure_info_def;
-typedef gc_obj<closure_info_def> closure_info;
-
-enum type {NIL, INT, FLOAT, BOOL, STRING, OBJECT, ARRAY, CLOSURE};
-
-struct type_and_value
-{
-    type t;
-    union
-    {
-        int64_t i;
-        double f;
-        bool b;
-        str * s;
-        obj * o;
-        arr * a;
-        closure * c;
-    } v;
-};
-
-struct closure_def
-{
-    closure_info * super;
-    const script * s;
-    int addr;
-};
-
-struct closure_info_def
-{
-    closure_info * super;
-    type_and_value self;
-};
 
 struct stack_info
 {
@@ -181,38 +122,6 @@ static const char * type_name(int type)
     if (type < 0 || type >= 8)
         return "[unknown type]";
     return names[type];
-}
-
-static type_and_value new_string(const std::string & str)
-{
-    return type_and_value{STRING, {.s = new_obj<str_def>(str)}};
-}
-
-static type_and_value new_empty_object()
-{
-    return type_and_value{OBJECT, {.o = new_obj<obj_def>()}};
-}
-
-static type_and_value new_array(arr_def::const_iterator begin, arr_def::const_iterator end)
-{
-    return type_and_value{ARRAY, {.a = new_obj<arr_def>(begin, end)}};
-}
-
-static type_and_value new_closure(closure_info * super, const script * s, int addr)
-{
-    closure * c = new_obj<closure_def>();
-    c->value.super = super;
-    c->value.s = s;
-    c->value.addr = addr;
-    return type_and_value{CLOSURE, {.c = c}};
-}
-
-static closure_info * new_closure_info(closure_info * super, const type_and_value & self)
-{
-    closure_info * ci = new_obj<closure_info_def>();
-    ci->value.super = super;
-    ci->value.self = self;
-    return ci;
 }
 
 static uint8_t code_next(const std::vector<uint8_t> * code, int & pc)
@@ -360,11 +269,43 @@ static type_and_value value_to_string(const type_and_value & tv)
 //     }
 // }
 
+type_and_value new_string(const std::string & str)
+{
+    return type_and_value{STRING, {.s = new_obj<str_def>(str)}};
+}
+
+type_and_value new_empty_object()
+{
+    return type_and_value{OBJECT, {.o = new_obj<obj_def>()}};
+}
+
+type_and_value new_array(arr_def::const_iterator begin, arr_def::const_iterator end)
+{
+    return type_and_value{ARRAY, {.a = new_obj<arr_def>(begin, end)}};
+}
+
+type_and_value new_closure(closure_info * super, const script * s, int addr)
+{
+    closure * c = new_obj<closure_def>();
+    c->value.super = super;
+    c->value.s = s;
+    c->value.addr = addr;
+    return type_and_value{CLOSURE, {.c = c}};
+}
+
+closure_info * new_closure_info(closure_info * super, const type_and_value & self)
+{
+    closure_info * ci = new_obj<closure_info_def>();
+    ci->value.super = super;
+    ci->value.self = self;
+    return ci;
+}
+
 void run_script(const script & s)
 {
     std::vector<type_and_value> stack = {new_empty_object()};
     obj_def & libs = stack[0].v.o->value;
-    libs["G"] = new_empty_object();
+    load_misc(libs);
     std::vector<stack_info> info;
     info.push_back({new_closure_info(nullptr, new_empty_object()), &s, 0, -1, -1});
     stack_info * cur_info = &info.back();

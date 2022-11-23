@@ -204,9 +204,9 @@ std::vector<uint8_t> get_script()
     size_t pos;
 }
 
-%token <i> INT
-%token <f> FLOAT
-%token <s> STRING NAME
+%token <i> INT_CONST
+%token <f> FLOAT_CONST
+%token <s> STRING_CONST NAME
 
 %type <i> param_list
 %type <pos> cond_return_dummy
@@ -263,9 +263,9 @@ param_list  : NAME                  { $$ = 0; E(parse_param(0, $1)); }
                                         E(parse_param((uint8_t)$$, $3));
                                     }
 
-exp     : INT                   { parse_push_int($1); }
-        | FLOAT                 { parse_push_float($1); }
-        | STRING                { C(PUSH_STRING); E(C(get_str_idx($1))); delete[] $1; }
+exp     : INT_CONST             { parse_push_int($1); }
+        | FLOAT_CONST           { parse_push_float($1); }
+        | STRING_CONST          { C(PUSH_STRING); E(C(get_str_idx($1))); delete[] $1; }
         | lv                    { E(parse_lv_read($1)); }
         | '+' exp %prec OP_POS  { C(POS); }
         | '-' exp %prec OP_NEG  { C(NEG); }

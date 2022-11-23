@@ -43,27 +43,27 @@
 
 [1-9][0-9]* {
     yylval.i = strtoll(yytext, nullptr, 0);
-    return INT;
+    return INT_CONST;
 }
 
 0[0-7]* {
     yylval.i = strtoll(yytext, nullptr, 0);
-    return INT;
+    return INT_CONST;
 }
 
 0[Xx][0-9A-Fa-f]+ {
     yylval.i = strtoll(yytext, nullptr, 0);
-    return INT;
+    return INT_CONST;
 }
 
 0[Bb][01]+ {
     yylval.i = strtoll(yytext, nullptr, 0);
-    return INT;
+    return INT_CONST;
 }
 
 ((0|[1-9][0-9]*)(\.[0-9]*)?|\.[0-9]+)([Ee][+-]?(0|[1-9][0-9]*))? {
     yylval.f = strtod(yytext, nullptr);
-    return FLOAT;
+    return FLOAT_CONST;
 }
 
 \"([^\\\"]|\\.)*\"|'([^\\']|\\.)*' {
@@ -93,7 +93,7 @@
         else yylval.s[j] = yytext[i];
     }
     yylval.s[j] = 0;
-    return STRING;
+    return STRING_CONST;
 }
 
 [A-Za-z_][0-9A-Za-z_]* {
