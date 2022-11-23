@@ -667,55 +667,43 @@ void run_script(const script & s)
             case CMP_EQ:
                 {
                     type_and_value tv2 = stack_pop(stack, ptr);
-                    type_and_value & tv = stack_top(stack, ptr);
-                    bool res = is_equal(tv, tv2);
-                    tv.t = BOOL;
-                    tv.v.b = res;
+                    type_and_value tv = stack_pop(stack, ptr);
+                    stack.push_back({BOOL, {.b = is_equal(tv, tv2)}});
                 }
                 break;
             case CMP_NE:
                 {
                     type_and_value tv2 = stack_pop(stack, ptr);
-                    type_and_value & tv = stack_top(stack, ptr);
-                    bool res = !is_equal(tv, tv2);
-                    tv.t = BOOL;
-                    tv.v.b = res;
+                    type_and_value tv = stack_pop(stack, ptr);
+                    stack.push_back({BOOL, {.b = !is_equal(tv, tv2)}});
                 }
                 break;
             case CMP_GT:
                 {
                     type_and_value tv2 = stack_pop(stack, ptr);
-                    type_and_value & tv = stack_top(stack, ptr);
-                    bool res = is_greater(tv, tv2);
-                    tv.t = BOOL;
-                    tv.v.b = res;
+                    type_and_value tv = stack_pop(stack, ptr);
+                    stack.push_back({BOOL, {.b = is_greater(tv, tv2)}});
                 }
                 break;
             case CMP_LT:
                 {
                     type_and_value tv2 = stack_pop(stack, ptr);
-                    type_and_value & tv = stack_top(stack, ptr);
-                    bool res = is_less(tv, tv2);
-                    tv.t = BOOL;
-                    tv.v.b = res;
+                    type_and_value tv = stack_pop(stack, ptr);
+                    stack.push_back({BOOL, {.b = is_less(tv, tv2)}});
                 }
                 break;
             case CMP_GE:
                 {
                     type_and_value tv2 = stack_pop(stack, ptr);
-                    type_and_value & tv = stack_top(stack, ptr);
-                    bool res = !is_less(tv, tv2);
-                    tv.t = BOOL;
-                    tv.v.b = res;
+                    type_and_value tv = stack_pop(stack, ptr);
+                    stack.push_back({BOOL, {.b = !is_less(tv, tv2)}});
                 }
                 break;
             case CMP_LE:
                 {
                     type_and_value tv2 = stack_pop(stack, ptr);
-                    type_and_value & tv = stack_top(stack, ptr);
-                    bool res = !is_greater(tv, tv2);
-                    tv.t = BOOL;
-                    tv.v.b = res;
+                    type_and_value tv = stack_pop(stack, ptr);
+                    stack.push_back({BOOL, {.b = !is_greater(tv, tv2)}});
                 }
                 break;
             case NOT:
@@ -723,6 +711,20 @@ void run_script(const script & s)
                     type_and_value & tv = stack_top(stack, ptr);
                     check_type(tv, BOOL);
                     tv.v.b = !tv.v.b;
+                }
+                break;
+            case LEN:
+                {
+                    type_and_value tv = stack_pop(stack, ptr);
+                    type_and_value ltv{INT};
+                    switch (tv.t)
+                    {
+                    case STRING: ltv.v.i = tv.v.s->value.size(); break;
+                    case OBJECT: ltv.v.i = tv.v.o->value.size(); break;
+                    case ARRAY: ltv.v.i = tv.v.a->value.size(); break;
+                    default: throw vm_error("Cannot apply '#' on type %s", type_name(tv.t));
+                    }
+                    stack.push_back(ltv);
                 }
                 break;
             case JUMP:
@@ -871,6 +873,7 @@ void dump_code(const script & s)
         "CMP_GE",
         "CMP_LE",
         "NOT",
+        "LEN",
         "JUMP",
         "JUMP_IF",
         "JUMP_UNLESS",
@@ -915,6 +918,7 @@ void dump_code(const script & s)
         case CMP_GE:
         case CMP_LE:
         case NOT:
+        case LEN:
         case RETURN:
         case IN:
         case OUT:

@@ -230,7 +230,7 @@ std::vector<uint8_t> get_script()
 %left OP_SHL OP_SHR OP_USHR
 %left '+' '-'
 %left '*' '/' '%'
-%left OP_POS OP_NEG '!' '~'
+%left OP_POS OP_NEG '!' '~' '#'
 
 %%
 
@@ -271,6 +271,7 @@ exp     : INT_CONST             { parse_push_int($1); }
         | '-' exp %prec OP_NEG  { C(NEG); }
         | '!' exp               { C(NOT); }
         | '~' exp               { C(BINV); }
+        | '#' exp               { C(LEN); }
         | exp '+' exp           { C(ADD); }
         | exp '-' exp           { C(SUB); }
         | exp '*' exp           { C(MUL); }

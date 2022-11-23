@@ -109,6 +109,7 @@ enum instruction : uint8_t
     CMP_GE,
     CMP_LE,
     NOT,
+    LEN,
     JUMP, // byte
     JUMP_IF, // byte (pop)
     JUMP_UNLESS, // byte (pop)
